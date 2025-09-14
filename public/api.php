@@ -52,7 +52,40 @@ function checkMobile() {
     return preg_match('/iPhone|iPad|Android/i', $ua);
 }
 
-$action = $_GET['action'] ?? $_POST['action'] ?? 'unknown';
+// Проверка авторизации пользователя
+function isUserLoggedIn() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    if (!isset($_SESSION['user_id'])) {
+        return false;
+    }
+    
+    // Проверяем валидность сессии в БД
+    $db = getDb();
+    $stmt = $db->prepare("SELECT user_id FROM user_sessions WHERE session_id = ? AND expires_at > NOW()");
+    $stmt->execute([session_id()]);
+    
+    return $stmt->fetch() !== false;
+}
+
+// Получение ID текущего пользователя
+function getCurrentUserId() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    return $_SESSION['user_id'] ?? null;
+}
+
+// Обработка JSON input
+$jsonInput = file_get_contents('php://input');
+$input = json_decode($jsonInput, true);
+$action = $_GET['action'] ?? $_POST['action'] ?? $input['action'] ?? 'unknown';
+
+error_log("DEBUG: Action requested: " . $action);
+error_log("DEBUG: Request method: " . ($_SERVER['REQUEST_METHOD'] ?? 'unknown'));
+error_log("DEBUG: JSON input: " . ($jsonInput ?: 'empty'));
 
 try {
     switch ($action) {
@@ -71,15 +104,108 @@ try {
             break;
 
         case 'register-options':
+            error_log("DEBUG: register-options called");
+            error_log("DEBUG: User-Agent: " . ($_SERVER['HTTP_USER_AGENT'] ?? 'none'));
+            
             if (!checkMobile()) {
-                respond(['success' => false, 'message' => 'Mobile device required'], 403);
+                error_log("DEBUG: Mobile check failed");
+                respond([
+                    'success' => false, 
+                    'message' => 'Доступ разрешен только с мобильных устройств', 
+                    'debug' => [
+                        'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'none',
+                        'isMobile' => false
+                    ]
+                ], 403);
             }
 
-            session_start();
+            // Проверяем, не авторизован ли уже пользователь
+            if (isUserLoggedIn()) {
+                error_log("DEBUG: User already logged in");
+                respond([
+                    'success' => false, 
+                    'message' => 'Пользователь уже авторизован. Выйдите из системы для регистрации нового пользователя.',
+                    'code' => 'ALREADY_LOGGED_IN'
+                ], 400);
+            }
             
-            // Генерируем простые данные
-            $userId = bin2hex(random_bytes(8));
-            $userHandle = random_bytes(16);
+            error_log("DEBUG: Checks passed, proceeding with registration");
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            
+            // Проверяем существующие учетные данные для исключения из регистрации
+            $db = getDb();
+            $stmt = $db->prepare("SELECT credential_id FROM user_credentials");
+            $stmt->execute();
+            $existingCredentials = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            $excludeCredentials = [];
+            foreach ($existingCredentials as $credId) {
+                $excludeCredentials[] = [
+                    'type' => 'public-key',
+                    'id' => base64url_encode($credId)
+                ];
+            }
+            
+            // Генерируем стабильный userID на основе устройства
+            // Получаем дополнительные данные устройства от клиента
+            $deviceData = $input['deviceData'] ?? [];
+            
+            // Используем только стабильные характеристики для идентификации устройства
+            $deviceFingerprint = implode('|', [
+                $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+                $_SERVER['REMOTE_ADDR'] ?? 'unknown', // Убираем порт - он меняется
+                // Добавляем стабильные данные с клиента
+                $deviceData['screenWidth'] ?? 'unknown',
+                $deviceData['screenHeight'] ?? 'unknown',
+                $deviceData['colorDepth'] ?? 'unknown',
+                $deviceData['pixelRatio'] ?? 'unknown',
+                $deviceData['timezone'] ?? 'unknown',
+                $deviceData['platform'] ?? 'unknown',
+                $deviceData['hardwareConcurrency'] ?? 'unknown',
+                $deviceData['maxTouchPoints'] ?? 'unknown'
+            ]);
+            
+            error_log("DEBUG: Device fingerprint components: " . $deviceFingerprint);
+            $deviceId = hash('sha256', $deviceFingerprint);
+            error_log("DEBUG: Generated device ID: " . $deviceId);
+            error_log("DEBUG: Device hash (first 16 chars): " . substr($deviceId, 0, 16));
+            $userId = substr($deviceId, 0, 16); // Используем первые 16 символов хеша
+            $userHandle = hex2bin($userId . str_pad('', 16, '0')); // Дополняем до 16 байт
+            
+            // Проверяем, существует ли уже пользователь с таким device ID
+            $stmt = $db->prepare("SELECT id, user_id FROM users WHERE user_handle = ?");
+            $stmt->execute([base64url_encode($userHandle)]);
+            $existingUser = $stmt->fetch();
+            
+            if ($existingUser) {
+                error_log("DEBUG: Found existing user - ID: " . $existingUser['id'] . ", user_id: " . $existingUser['user_id']);
+                respond([
+                    'success' => false,
+                    'message' => 'Это устройство уже зарегистрировано! Используйте кнопку "Войти" для авторизации.',
+                    'code' => 'DEVICE_ALREADY_REGISTERED',
+                    'debug' => [
+                        'existing_user_id' => $existingUser['user_id'],
+                        'current_device_id' => $userId,
+                        'fingerprint_hash' => substr($deviceId, 0, 16)
+                    ]
+                ], 400);
+            }
+            
+            // Дополнительная проверка по credential - возможно есть existing credentials для этого устройства
+            $stmt = $db->prepare("SELECT user_id FROM user_credentials");
+            $stmt->execute();
+            $existingCredentials = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            if (!empty($existingCredentials)) {
+                error_log("DEBUG: Found " . count($existingCredentials) . " existing credentials in database");
+                foreach ($existingCredentials as $credId) {
+                    error_log("DEBUG: Existing credential ID: " . bin2hex($credId));
+                }
+            }
+            
             $challenge = random_bytes(32);
             
             // Сохраняем в сессии (используем base64url)
@@ -91,12 +217,12 @@ try {
                 'success' => true,
                 'rp' => [
                     'name' => 'WebAuthn Test',
-                    'id' => parse_url($_SERVER['HTTP_ORIGIN'] ?? 'https://localhost', PHP_URL_HOST)
+                    'id' => $_SERVER['HTTP_HOST'] ?? 'localhost'
                 ],
                 'user' => [
                     'id' => base64url_encode($userHandle),
-                    'name' => 'User#' . substr($userId, 0, 6),
-                    'displayName' => 'Test User #' . substr($userId, 0, 6)
+                    'name' => 'Device-' . substr($userId, 0, 8),
+                    'displayName' => 'Device User'
                 ],
                 'challenge' => base64url_encode($challenge),
                 'pubKeyCredParams' => [
@@ -104,18 +230,24 @@ try {
                     ['type' => 'public-key', 'alg' => -257]
                 ],
                 'timeout' => 60000,
-                'excludeCredentials' => [],
+                'excludeCredentials' => $excludeCredentials,
                 'authenticatorSelection' => [
-                    'authenticatorAttachment' => 'platform',
-                    'residentKey' => 'required',
+                    'authenticatorAttachment' => 'platform', // Только встроенные (отпечаток/Face ID)
+                    'residentKey' => 'preferred',
+                    'requireResidentKey' => false,
                     'userVerification' => 'required'
                 ],
-                'attestation' => 'none'
+                'attestation' => 'none',
+                'extensions' => (object)[
+                    'credProps' => true
+                ]
             ]);
             break;
 
         case 'register-verify':
-            session_start();
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
             
             if (!isset($_SESSION['reg_challenge']) || !isset($_SESSION['reg_user_id'])) {
                 respond(['success' => false, 'message' => 'Invalid session'], 400);
@@ -191,26 +323,76 @@ try {
             break;
 
         case 'auth-options':
+            error_log("DEBUG: auth-options called");
+            error_log("DEBUG: User-Agent: " . ($_SERVER['HTTP_USER_AGENT'] ?? 'none'));
+            
             if (!checkMobile()) {
-                respond(['success' => false, 'message' => 'Mobile device required'], 403);
+                error_log("DEBUG: Mobile check failed for auth");
+                respond([
+                    'success' => false, 
+                    'message' => 'Доступ разрешен только с мобильных устройств', 
+                    'debug' => [
+                        'userAgent' => $_SERVER['HTTP_USER_AGENT'] ?? 'none',
+                        'isMobile' => false
+                    ]
+                ], 403);
             }
 
-            session_start();
+            // Проверяем, не авторизован ли уже пользователь
+            if (isUserLoggedIn()) {
+                error_log("DEBUG: User already logged in for auth");
+                respond([
+                    'success' => false, 
+                    'message' => 'Пользователь уже авторизован. Для повторной авторизации сначала выйдите из системы.',
+                    'code' => 'ALREADY_LOGGED_IN'
+                ], 400);
+            }
+            
+            error_log("DEBUG: Auth checks passed, proceeding");
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
             $challenge = random_bytes(32);
             $_SESSION['auth_challenge'] = base64url_encode($challenge);
+            
+            // Получаем все существующие учетные данные
+            $db = getDb();
+            $stmt = $db->prepare("SELECT credential_id FROM user_credentials");
+            $stmt->execute();
+            $existingCredentials = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            $allowCredentials = [];
+            foreach ($existingCredentials as $credId) {
+                $allowCredentials[] = [
+                    'type' => 'public-key',
+                    'id' => $credId // credential_id уже сохранен в base64url формате
+                ];
+            }
+            
+            // Если нет зарегистрированных учетных данных
+            if (empty($allowCredentials)) {
+                respond([
+                    'success' => false,
+                    'message' => 'Нет зарегистрированных учетных данных. Сначала зарегистрируйтесь.',
+                    'code' => 'NO_CREDENTIALS'
+                ], 400);
+            }
             
             respond([
                 'success' => true,
                 'challenge' => base64url_encode($challenge),
                 'timeout' => 60000,
-                'rpId' => parse_url($_SERVER['HTTP_ORIGIN'] ?? 'https://localhost', PHP_URL_HOST),
-                'allowCredentials' => [],
+                'rpId' => $_SERVER['HTTP_HOST'] ?? 'localhost',
+                'allowCredentials' => $allowCredentials,
                 'userVerification' => 'required'
             ]);
             break;
 
         case 'auth-verify':
-            session_start();
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
             
             if (!isset($_SESSION['auth_challenge'])) {
                 respond(['success' => false, 'message' => 'Invalid session'], 400);
@@ -307,7 +489,13 @@ try {
             break;
 
         case 'logout':
-            session_start();
+            error_log("DEBUG: logout called");
+            error_log("DEBUG: Request method: " . $_SERVER['REQUEST_METHOD']);
+            error_log("DEBUG: Content-Type: " . ($_SERVER['CONTENT_TYPE'] ?? 'none'));
+            
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
             if (isset($_SESSION['session_id'])) {
                 try {
                     $db = getDb();
@@ -322,24 +510,17 @@ try {
             break;
 
         case 'status':
-            session_start();
-            $authenticated = false;
-            
-            if (isset($_SESSION['session_id'])) {
-                try {
-                    $db = getDb();
-                    $stmt = $db->prepare("SELECT 1 FROM user_sessions WHERE session_id = ? AND expires_at > NOW()");
-                    $stmt->execute([$_SESSION['session_id']]);
-                    $authenticated = (bool)$stmt->fetch();
-                } catch (Exception $e) {
-                    // Ignore database errors
-                }
-            }
+            $isLoggedIn = isUserLoggedIn();
+            $userId = getCurrentUserId();
             
             respond([
                 'success' => true,
-                'authenticated' => $authenticated,
-                'message' => $authenticated ? 'Authenticated' : 'Not authenticated'
+                'authenticated' => $isLoggedIn,
+                'isLoggedIn' => $isLoggedIn,
+                'userId' => $userId,
+                'canRegister' => !$isLoggedIn,
+                'canLogin' => !$isLoggedIn,
+                'message' => $isLoggedIn ? 'Пользователь уже авторизован' : 'Пользователь не авторизован'
             ]);
             break;
 

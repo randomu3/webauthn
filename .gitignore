@@ -1,41 +1,47 @@
 # Dependencies
-/vendor/
-composer.lock
+node_modules/
+vendor/
 
-# Environment
+# Environment files
 .env
 .env.local
+.env.production
+
+# Database
+*.sql.backup
+*.dump
+
+# Logs
+*.log
+logs/
+docker/mysql/data/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-/docker/logs/
+# Docker volumes
+docker/mysql/data/
 
-# Database
-*.sql.gz
-*.sql.bak
-
-# Docker
-.docker/
-docker-compose.override.yml
+# Backup files
+*.backup
+*.bak
 
 # Temporary files
-/tmp/
-/temp/
+tmp/
+temp/
 *.tmp
 
-# User uploads
-/uploads/
+# Composer
+composer.lock
 
 # Cache
-/cache/
+cache/
 *.cache
