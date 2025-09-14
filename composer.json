@@ -1,0 +1,26 @@
+{
+    "name": "webauthn/fingerprint-test",
+    "description": "WebAuthn Fingerprint Authentication Test Project - Simple Implementation",
+    "type": "project",
+    "authors": [
+        {
+            "name": "WebAuthn Demo",
+            "description": "Демонстрационный проект для тестирования биометрической аутентификации"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-pdo": "*",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "WebAuthn\\": "src/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "stable",
+    "keywords": ["webauthn", "fingerprint", "biometric", "authentication", "demo"]
+}

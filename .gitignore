@@ -1,0 +1,41 @@
+# Dependencies
+/vendor/
+composer.lock
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/docker/logs/
+
+# Database
+*.sql.gz
+*.sql.bak
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Temporary files
+/tmp/
+/temp/
+*.tmp
+
+# User uploads
+/uploads/
+
+# Cache
+/cache/
+*.cache
