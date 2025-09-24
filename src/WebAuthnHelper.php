@@ -37,7 +37,8 @@ class WebAuthnHelper
      */
     public static function generateChallenge(): string
     {
-        return random_bytes(32);
+        require_once __DIR__ . '/WebAuthnSecurity.php';
+        return WebAuthnSecurity::generateSecureChallenge(32);
     }
     
     /**

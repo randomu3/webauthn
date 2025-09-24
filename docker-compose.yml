@@ -9,7 +9,7 @@ services:
       - .:/var/www/html
       - ./docker/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf
     env_file:
-      - .env
+      - env.development
     environment:
       - APACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT:-/var/www/html/public}
       - DB_HOST=${DB_HOST:-db}
@@ -24,7 +24,7 @@ services:
   db:
     image: mysql:8.0
     env_file:
-      - .env
+      - env.development
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-webauthn_db}

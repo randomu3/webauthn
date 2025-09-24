@@ -1,6 +1,6 @@
 <?php
 /**
- * Рефакторнутый API для WebAuthn с использованием классов
+ * Безопасный API для WebAuthn с продакшен security мерами
  */
 
 // Подключаем классы
@@ -8,17 +8,37 @@ require_once __DIR__ . '/../src/Database.php';
 require_once __DIR__ . '/../src/DeviceHelper.php';
 require_once __DIR__ . '/../src/WebAuthnHelper.php';
 require_once __DIR__ . '/../src/SessionManager.php';
+require_once __DIR__ . '/../src/WebAuthnSecurity.php';
+require_once __DIR__ . '/../src/SecurityHeaders.php';
+require_once __DIR__ . '/../src/RateLimiter.php';
+require_once __DIR__ . '/../src/AnalyticsManager.php';
 
 use WebAuthn\Database;
 use WebAuthn\DeviceHelper;
 use WebAuthn\WebAuthnHelper;
 use WebAuthn\SessionManager;
+use WebAuthn\WebAuthnSecurity;
+use WebAuthn\SecurityHeaders;
+use WebAuthn\RateLimiter;
+use WebAuthn\AnalyticsManager;
 
-// Настройка заголовков
-header('Content-Type: application/json; charset=utf-8');
+// Устанавливаем security headers
+SecurityHeaders::setSecurityHeaders();
+
+// Проверяем HTTPS (в продакшене обязательно)
+if (!SecurityHeaders::enforceHTTPS()) {
+    exit;
+}
+
+// Валидируем origin для защиты от CSRF
+if (!SecurityHeaders::validateOrigin()) {
+    exit;
+}
+
+// CORS заголовки (Content-Type уже установлен в SecurityHeaders)
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
@@ -50,6 +70,26 @@ try {
     // Инициализация компонентов
     $db = new Database();
     $sessionManager = new SessionManager($db);
+    $rateLimiter = new RateLimiter($db);
+    $analytics = new AnalyticsManager($db);
+    
+    // Проверяем заблокированные IP
+    if ($rateLimiter->isIPBlocked()) {
+        // Логируем блокировку IP
+        $analytics->recordSecurityIncident(
+            'RATE_LIMIT_ABUSE',
+            'HIGH',
+            null,
+            ['blocked_ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'],
+            'IP address blocked due to rate limit violations'
+        );
+        
+        respond([
+            'success' => false,
+            'error' => 'IP_BLOCKED',
+            'message' => 'Your IP address has been temporarily blocked due to suspicious activity'
+        ], 429);
+    }
     
     // Обработка JSON input
     $jsonInput = file_get_contents('php://input');
@@ -69,6 +109,14 @@ try {
             break;
             
         case 'register-options':
+            // Rate limiting для регистрации: 5 попыток в 10 минут
+            if (!$rateLimiter->checkIPLimit('register-options', 5, 10)) {
+                respond([
+                    'success' => false,
+                    'error' => 'RATE_LIMIT_EXCEEDED',
+                    'message' => 'Too many registration attempts. Please try again later.'
+                ], 429);
+            }
             handleRegisterOptions($db, $sessionManager, $input);
             break;
             
@@ -77,6 +125,14 @@ try {
             break;
             
         case 'auth-options':
+            // Rate limiting для аутентификации: 10 попыток в 15 минут
+            if (!$rateLimiter->checkIPLimit('auth-options', 10, 15)) {
+                respond([
+                    'success' => false,
+                    'error' => 'RATE_LIMIT_EXCEEDED',
+                    'message' => 'Too many authentication attempts. Please try again later.'
+                ], 429);
+            }
             handleAuthOptions($db, $sessionManager);
             break;
             
