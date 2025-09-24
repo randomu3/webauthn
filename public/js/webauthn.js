@@ -184,6 +184,15 @@ function showLoggedOutState() {
     $('#loggedInSection').addClass('hidden').hide();
 }
 
+// Глобальный обработчик ошибок для отладки
+window.addEventListener('error', function(event) {
+    console.error('Global error caught:', event.error);
+    if (event.error && event.error.message && event.error.message.includes('Cannot read properties of null')) {
+        console.error('NULL property access error at:', event.filename, ':', event.lineno, ':', event.colno);
+        console.error('Stack trace:', event.error.stack);
+    }
+});
+
 // Проверка устройства (jQuery)
 function checkDevice() {
     const userAgent = navigator.userAgent;
@@ -219,11 +228,20 @@ function checkDevice() {
 
 // Показать статус (jQuery)
 function showStatus(message, type = 'info') {
-    $('#status')
-        .removeClass('success error info')
+    const statusElement = $('#status');
+    
+    statusElement
+        .removeClass('success error info hidden')
         .addClass(type)
         .text(message)
-        .removeClass('hidden');
+        .show();
+    
+    // Дополнительная проверка для уверенности что элемент видим
+    if (statusElement.hasClass('hidden')) {
+        statusElement.removeClass('hidden');
+    }
+    
+    console.log('Status shown:', message, 'Type:', type);
 }
 
 // Показать debug (jQuery)
@@ -326,6 +344,50 @@ async function register() {
         if (!options.success) {
             MobileLogger.log('error', 'Backend', `Сервер вернул ошибку: ${options.message}`);
             throw new Error(options.message);
+        }
+        
+        // Проверяем, если устройство уже зарегистрировано
+        if (options.alreadyRegistered) {
+            MobileLogger.log('info', 'WebAuthn', `Устройство уже зарегистрировано: ${options.message}`);
+            showStatus('✅ ' + options.message, 'success');
+            
+            // Используем jQuery для безопасной работы с DOM
+            try {
+                // Скрываем кнопку регистрации и показываем кнопку входа
+                $('#registerBtn').hide();
+                $('#loginBtn').show();
+                
+                // Показываем debug информацию
+                showDebug({
+                    message: options.message,
+                    code: options.code,
+                    action: options.action,
+                    debug: options.debug
+                });
+                
+                MobileLogger.log('success', 'UI', 'Интерфейс обновлен для уже зарегистрированного устройства');
+                
+            } catch (uiError) {
+                console.error('UI update error in alreadyRegistered handler:', uiError);
+                MobileLogger.log('error', 'UI', `Ошибка при обновлении интерфейса: ${uiError.message}`);
+                
+                // Показываем хотя бы debug информацию
+                try {
+                    showDebug({
+                        message: options.message,
+                        code: options.code,
+                        action: options.action,
+                        debug: options.debug,
+                        uiError: uiError.message
+                    });
+                } catch (debugError) {
+                    console.error('Debug show error:', debugError);
+                }
+            }
+            
+            // Разблокируем кнопки и завершаем
+            enableButtons();
+            return; // Выходим из функции, не пытаемся регистрировать
         }
         
         showStatus('Приложите палец к датчику...', 'info');

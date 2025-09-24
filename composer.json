@@ -4,8 +4,7 @@
     "type": "project",
     "authors": [
         {
-            "name": "WebAuthn Demo",
-            "description": "Демонстрационный проект для тестирования биометрической аутентификации"
+            "name": "WebAuthn Demo"
         }
     ],
     "require": {

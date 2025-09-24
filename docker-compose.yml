@@ -4,12 +4,18 @@ services:
   web:
     build: .
     ports:
-      - "8080:80"
+      - "${WEB_PORT:-8080}:80"
     volumes:
       - .:/var/www/html
       - ./docker/apache/000-default.conf:/etc/apache2/sites-available/000-default.conf
+    env_file:
+      - .env
     environment:
-      - APACHE_DOCUMENT_ROOT=/var/www/html/public
+      - APACHE_DOCUMENT_ROOT=${APACHE_DOCUMENT_ROOT:-/var/www/html/public}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_NAME=${DB_NAME:-webauthn_db}
+      - DB_USER=${DB_USER:-webauthn_user}
+      - DB_PASS=${DB_PASS:-webauthn_pass}
     depends_on:
       - db
     networks:
@@ -17,13 +23,15 @@ services:
 
   db:
     image: mysql:8.0
+    env_file:
+      - .env
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: webauthn_db
-      MYSQL_USER: webauthn_user
-      MYSQL_PASSWORD: webauthn_pass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-webauthn_db}
+      MYSQL_USER: ${MYSQL_USER:-webauthn_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-webauthn_pass}
     ports:
-      - "3306:3306"
+      - "${DB_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql

@@ -11,10 +11,10 @@ class Database
 
     public function __construct()
     {
-        $host = 'db';
-        $dbname = 'webauthn_db';
-        $username = 'webauthn_user';
-        $password = 'webauthn_pass';
+        $host = $_ENV['DB_HOST'] ?? 'db';
+        $dbname = $_ENV['DB_NAME'] ?? 'webauthn_db';
+        $username = $_ENV['DB_USER'] ?? 'webauthn_user';
+        $password = $_ENV['DB_PASS'] ?? 'webauthn_pass';
 
         $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
 

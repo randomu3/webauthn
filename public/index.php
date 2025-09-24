@@ -1,13 +1,10 @@
 <?php
 // Главная страница с автоматическим редиректом на WebAuthn
 
-// Проверка мобильного устройства
-function isMobileDevice() {
-    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-    return preg_match('/iPhone|iPad|iPod|Android|Mobile|BlackBerry|Opera Mini/i', $userAgent);
-}
+require_once __DIR__ . '/../src/DeviceHelper.php';
+use WebAuthn\DeviceHelper;
 
-$isMobile = isMobileDevice();
+$isMobile = DeviceHelper::isMobileDevice();
 ?>
 <!DOCTYPE html>
 <html lang="ru">
