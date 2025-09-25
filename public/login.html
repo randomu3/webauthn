@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в систему - НПФ Сургутнефтегаз</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/npf-theme.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input {
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .login-btn {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+        
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .quick-login-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .quick-login-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #495057;
+        }
+        
+        .pin-input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .pin-digit {
+            width: 45px;
+            height: 45px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+        
+        .pin-digit:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+        
+        .quick-login-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+        }
+        
+        .webauthn-btn {
+            background: linear-gradient(135deg, #6f42c1, #e83e8c);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .demo-credentials {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .demo-credentials h4 {
+            margin: 0 0 10px 0;
+            color: #856404;
+        }
+        
+        .demo-credentials p {
+            margin: 5px 0;
+            font-family: monospace;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <div class="header">
+                <div class="app-header">
+                    <div class="app-logo">🏢</div>
+                    <div class="app-title">Вход в систему</div>
+                    <div class="app-subtitle">НПФ Сургутнефтегаз<br>Личный кабинет</div>
+                </div>
+            </div>
+
+            <!-- Демо данные для тестирования -->
+            <div class="demo-credentials">
+                <h4>📝 Тестовые данные:</h4>
+                <p><strong>Логин:</strong> testuser</p>
+                <p><strong>Пароль:</strong> password123</p>
+                <p><em>Включите "Запомнить меня" для демонстрации</em></p>
+            </div>
+
+            <!-- Статус сообщения -->
+            <div id="status" class="status hidden"></div>
+
+            <!-- Обычная форма входа -->
+            <div id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">Логин или Email:</label>
+                    <input type="text" id="username" name="username" required 
+                           placeholder="Введите логин или email" autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Пароль:</label>
+                    <input type="password" id="password" name="password" required 
+                           placeholder="Введите пароль" autocomplete="current-password">
+                </div>
+
+                <div class="remember-me">
+                    <input type="checkbox" id="rememberMe" name="remember_me">
+                    <label for="rememberMe">Запомнить меня (быстрый вход)</label>
+                </div>
+
+                <button type="button" id="loginBtn" class="login-btn">
+                    Войти
+                </button>
+            </div>
+
+            <!-- Быстрый вход для returning users -->
+            <div id="quickLoginSection" class="quick-login-section">
+                <div class="quick-login-title">⚡ Быстрый вход</div>
+                
+                <p>Добро пожаловать, <span id="userDisplayName"></span>!</p>
+                
+                <div>
+                    <label>Введите 6-значный PIN код:</label>
+                    <div class="pin-input-group">
+                        <input type="number" class="pin-digit" maxlength="1" pattern="[0-9]" data-index="0">
+                        <input type="number" class="pin-digit" maxlength="1" pattern="[0-9]" data-index="1">
+                        <input type="number" class="pin-digit" maxlength="1" pattern="[0-9]" data-index="2">
+                        <input type="number" class="pin-digit" maxlength="1" pattern="[0-9]" data-index="3">
+                        <input type="number" class="pin-digit" maxlength="1" pattern="[0-9]" data-index="4">
+                        <input type="number" class="pin-digit" maxlength="1" pattern="[0-9]" data-index="5">
+                    </div>
+                    
+                    <button type="button" id="quickLoginBtn" class="quick-login-btn">
+                        Войти по PIN
+                    </button>
+                </div>
+
+                <div id="webauthnSection" style="display: none;">
+                    <button type="button" id="webauthnBtn" class="webauthn-btn">
+                        🔐 Войти по отпечатку пальца
+                    </button>
+                </div>
+
+                <div style="margin-top: 15px; text-align: center;">
+                    <button type="button" id="usePasswordBtn" class="btn-link">
+                        Войти через логин и пароль
+                    </button>
+                </div>
+            </div>
+
+            <!-- Debug информация -->
+            <div id="debug" class="debug hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Проверяем remember token при загрузке
+            checkRememberToken();
+            
+            // Настройка PIN input
+            setupPinInput();
+            
+            // Обработчики событий
+            $('#loginBtn').on('click', handleLogin);
+            $('#quickLoginBtn').on('click', handleQuickLogin);
+            $('#webauthnBtn').on('click', handleWebAuthnLogin);
+            $('#usePasswordBtn').on('click', showPasswordForm);
+            
+            // Enter для отправки формы
+            $('#loginForm input').on('keypress', function(e) {
+                if (e.which === 13) {
+                    handleLogin();
+                }
+            });
+        });
+
+        // Проверка remember token
+        function checkRememberToken() {
+            $.ajax({
+                url: 'auth_api.php?action=check-remember',
+                method: 'POST',
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.success && response.quick_login_available) {
+                        showQuickLogin(response);
+                    }
+                },
+                error: function() {
+                    // Токен недействителен или отсутствует - показываем обычную форму
+                    showPasswordForm();
+                }
+            });
+        }
+
+        // Показать быстрый вход
+        function showQuickLogin(userData) {
+            $('#loginForm').hide();
+            $('#quickLoginSection').show();
+            $('#userDisplayName').text(userData.display_name || userData.username);
+            
+            if (userData.webauthn_enabled) {
+                $('#webauthnSection').show();
+            }
+            
+            showStatus('🚀 Быстрый вход доступен!', 'info');
+        }
+
+        // Показать обычную форму
+        function showPasswordForm() {
+            $('#quickLoginSection').hide();
+            $('#loginForm').show();
+            clearStatus();
+        }
+
+        // Обработка обычного входа
+        function handleLogin() {
+            const username = $('#username').val().trim();
+            const password = $('#password').val().trim();
+            const rememberMe = $('#rememberMe').is(':checked');
+
+            if (!username || !password) {
+                showStatus('❌ Введите логин и пароль', 'error');
+                return;
+            }
+
+            setLoading(true);
+            showStatus('🔄 Проверка данных...', 'info');
+
+            $.ajax({
+                url: 'auth_api.php?action=login',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    username: username,
+                    password: password,
+                    remember_me: rememberMe
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        showStatus('✅ Вход выполнен успешно!', 'success');
+                        
+                        // Перенаправляем на главную или setup страницу
+                        if (!response.pin_enabled) {
+                            // Первый вход - нужно настроить PIN
+                            setTimeout(() => {
+                                window.location.href = 'setup.html';
+                            }, 1000);
+                        } else {
+                            // Обычный вход
+                            setTimeout(() => {
+                                window.location.href = 'dashboard.html';
+                            }, 1000);
+                        }
+                    } else {
+                        showStatus('❌ ' + response.message, 'error');
+                    }
+                },
+                error: function(xhr) {
+                    const response = xhr.responseJSON || {};
+                    showStatus('❌ ' + (response.message || 'Ошибка входа'), 'error');
+                },
+                complete: function() {
+                    setLoading(false);
+                }
+            });
+        }
+
+        // Обработка быстрого входа по PIN
+        function handleQuickLogin() {
+            const pin = getPinValue();
+            
+            if (pin.length !== 6) {
+                showStatus('❌ Введите 6-значный PIN код', 'error');
+                return;
+            }
+
+            // Получаем user_id из remember token
+            $.ajax({
+                url: 'auth_api.php?action=check-remember',
+                method: 'POST',
+                contentType: 'application/json',
+                success: function(tokenResponse) {
+                    if (!tokenResponse.success) {
+                        showStatus('❌ Сессия истекла', 'error');
+                        showPasswordForm();
+                        return;
+                    }
+
+                    setLoading(true);
+                    showStatus('🔄 Проверка PIN...', 'info');
+
+                    $.ajax({
+                        url: 'auth_api.php?action=login-pin',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            user_id: tokenResponse.user_id,
+                            pin: pin
+                        }),
+                        success: function(response) {
+                            if (response.success) {
+                                showStatus('✅ Вход по PIN выполнен!', 'success');
+                                setTimeout(() => {
+                                    window.location.href = 'dashboard.html';
+                                }, 1000);
+                            } else {
+                                showStatus('❌ ' + response.error, 'error');
+                                clearPin();
+                            }
+                        },
+                        error: function(xhr) {
+                            const response = xhr.responseJSON || {};
+                            showStatus('❌ ' + (response.message || 'Ошибка PIN'), 'error');
+                            clearPin();
+                        },
+                        complete: function() {
+                            setLoading(false);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Обработка WebAuthn входа
+        function handleWebAuthnLogin() {
+            showStatus('🔐 WebAuthn вход будет реализован...', 'info');
+            // TODO: Интеграция с существующим WebAuthn API
+        }
+
+        // Настройка PIN input
+        function setupPinInput() {
+            $('.pin-digit').on('input', function() {
+                const $this = $(this);
+                const value = $this.val();
+                
+                // Разрешаем только цифры
+                if (!/^\d$/.test(value)) {
+                    $this.val('');
+                    return;
+                }
+                
+                // Переход к следующему полю
+                const index = parseInt($this.data('index'));
+                if (value && index < 5) {
+                    $('.pin-digit[data-index="' + (index + 1) + '"]').focus();
+                }
+            });
+            
+            $('.pin-digit').on('keydown', function(e) {
+                const $this = $(this);
+                const index = parseInt($this.data('index'));
+                
+                // Backspace - переход к предыдущему полю
+                if (e.keyCode === 8 && !$this.val() && index > 0) {
+                    $('.pin-digit[data-index="' + (index - 1) + '"]').focus();
+                }
+                
+                // Enter - отправка формы
+                if (e.keyCode === 13) {
+                    handleQuickLogin();
+                }
+            });
+        }
+
+        // Получение PIN значения
+        function getPinValue() {
+            let pin = '';
+            $('.pin-digit').each(function() {
+                pin += $(this).val();
+            });
+            return pin;
+        }
+
+        // Очистка PIN
+        function clearPin() {
+            $('.pin-digit').val('');
+            $('.pin-digit[data-index="0"]').focus();
+        }
+
+        // Показать статус
+        function showStatus(message, type = 'info') {
+            $('#status')
+                .removeClass('hidden success error info')
+                .addClass(type)
+                .text(message)
+                .show();
+        }
+
+        // Очистить статус
+        function clearStatus() {
+            $('#status').addClass('hidden');
+        }
+
+        // Управление загрузкой
+        function setLoading(loading) {
+            if (loading) {
+                $('#loginBtn, #quickLoginBtn').prop('disabled', true).text('⏳ Загрузка...');
+            } else {
+                $('#loginBtn').prop('disabled', false).text('Войти');
+                $('#quickLoginBtn').prop('disabled', false).text('Войти по PIN');
+            }
+        }
+    </script>
+</body>
+</html>

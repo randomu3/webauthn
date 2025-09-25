@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет - НПФ Сургутнефтегаз</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/npf-theme.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .dashboard-container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 30px;
+        }
+        
+        .user-info {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .security-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .security-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #ddd;
+        }
+        
+        .security-card.enabled {
+            border-left-color: #28a745;
+        }
+        
+        .security-card.disabled {
+            border-left-color: #dc3545;
+        }
+        
+        .security-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+        }
+        
+        .security-card p {
+            margin: 0 0 15px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .security-actions {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #212529;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .logout-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .logout-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-container">
+            <div class="header">
+                <div class="app-header">
+                    <div class="app-logo">🏢</div>
+                    <div class="app-title">Личный кабинет</div>
+                    <div class="app-subtitle">НПФ Сургутнефтегаз<br>Управление безопасностью аккаунта</div>
+                </div>
+            </div>
+
+            <!-- Информация о пользователе -->
+            <div class="user-info">
+                <h2>👤 Добро пожаловать, <span id="userName">Загрузка...</span>!</h2>
+                <div id="userDetails">
+                    <p><strong>Последний вход:</strong> <span id="lastLogin">-</span></p>
+                    <p><strong>Метод входа:</strong> <span id="loginMethod">-</span></p>
+                    <p><strong>Всего входов:</strong> <span id="loginCount">-</span></p>
+                </div>
+            </div>
+
+            <!-- Статус безопасности -->
+            <div class="security-status">
+                <div class="security-card" id="passwordCard">
+                    <h3>🔐 Пароль</h3>
+                    <p>Традиционная авторизация по логину и паролю</p>
+                    <div class="status">✅ Настроен</div>
+                </div>
+
+                <div class="security-card" id="pinCard">
+                    <h3>📱 PIN код</h3>
+                    <p>6-значный код для быстрого входа</p>
+                    <div class="status" id="pinStatus">⏳ Проверка...</div>
+                </div>
+
+                <div class="security-card" id="webauthnCard">
+                    <h3>👆 WebAuthn</h3>
+                    <p>Биометрическая авторизация</p>
+                    <div class="status" id="webauthnStatus">⏳ Проверка...</div>
+                </div>
+            </div>
+
+            <!-- Действия -->
+            <div class="security-actions">
+                <h2>⚙️ Управление безопасностью</h2>
+                <p>Настройте дополнительные уровни защиты для вашего аккаунта</p>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="setupWebAuthn" style="display: none;">
+                        🔐 Настроить WebAuthn
+                    </button>
+                    
+                    <button class="btn btn-warning" id="resetPin" style="display: none;">
+                        🔄 Сбросить PIN
+                    </button>
+                    
+                    <a href="webauthn.html" class="btn btn-primary">
+                        🧪 Тестировать WebAuthn
+                    </a>
+                    
+                    <button class="btn btn-warning" id="changePassword">
+                        🔑 Сменить пароль
+                    </button>
+                </div>
+            </div>
+
+            <!-- Выход из системы -->
+            <div class="logout-section">
+                <h3>🚪 Выход из системы</h3>
+                <p>Выберите тип выхода в зависимости от ваших потребностей безопасности:</p>
+                
+                <div class="logout-options">
+                    <button class="btn btn-primary" id="simpleLogout">
+                        Обычный выход
+                    </button>
+                    
+                    <button class="btn btn-danger" id="secureLogout">
+                        Безопасный выход (сброс PIN и WebAuthn)
+                    </button>
+                </div>
+                
+                <div style="margin-top: 15px; font-size: 14px; color: #666;">
+                    <strong>Обычный выход:</strong> Сохраняет настройки быстрого входа<br>
+                    <strong>Безопасный выход:</strong> Удаляет все данные для быстрого входа
+                </div>
+            </div>
+
+            <!-- Статус сообщения -->
+            <div id="status" class="status hidden"></div>
+
+            <!-- Debug информация -->
+            <div id="debug" class="debug hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            loadUserInfo();
+            setupEventHandlers();
+        });
+
+        function setupEventHandlers() {
+            $('#simpleLogout').on('click', () => logout(false));
+            $('#secureLogout').on('click', () => logout(true));
+            $('#setupWebAuthn').on('click', setupWebAuthn);
+            $('#resetPin').on('click', resetPin);
+            $('#changePassword').on('click', changePassword);
+        }
+
+        function loadUserInfo() {
+            $.ajax({
+                url: 'auth_api.php?action=status',
+                method: 'POST',
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.success && response.authenticated && response.user) {
+                        displayUserInfo(response.user, response.session_info);
+                        updateSecurityStatus(response.user);
+                    } else {
+                        // Не авторизован - перенаправляем на вход
+                        window.location.href = 'login.html';
+                    }
+                },
+                error: function() {
+                    showStatus('❌ Ошибка загрузки данных пользователя', 'error');
+                }
+            });
+        }
+
+        function displayUserInfo(user, sessionInfo) {
+            $('#userName').text(user.display_name || user.username);
+            
+            if (user.last_login) {
+                const lastLogin = new Date(user.last_login).toLocaleString('ru-RU');
+                $('#lastLogin').text(lastLogin);
+            }
+            
+            $('#loginMethod').text(getLoginMethodText(user.last_login_method));
+            $('#loginCount').text(user.login_count || 0);
+        }
+
+        function getLoginMethodText(method) {
+            const methods = {
+                'PASSWORD': 'Логин и пароль',
+                'PIN': 'PIN код',
+                'WEBAUTHN': 'WebAuthn (биометрия)',
+                'REMEMBER_TOKEN': 'Автоматический вход'
+            };
+            return methods[method] || method || 'Не определен';
+        }
+
+        function updateSecurityStatus(user) {
+            // PIN статус
+            if (user.pin_enabled) {
+                $('#pinCard').addClass('enabled').removeClass('disabled');
+                $('#pinStatus').html('✅ Настроен').css('color', '#28a745');
+                $('#resetPin').show();
+            } else {
+                $('#pinCard').addClass('disabled').removeClass('enabled');
+                $('#pinStatus').html('❌ Не настроен').css('color', '#dc3545');
+            }
+
+            // WebAuthn статус
+            if (user.webauthn_enabled) {
+                $('#webauthnCard').addClass('enabled').removeClass('disabled');
+                $('#webauthnStatus').html('✅ Настроен').css('color', '#28a745');
+            } else {
+                $('#webauthnCard').addClass('disabled').removeClass('enabled');
+                $('#webauthnStatus').html('❌ Не настроен').css('color', '#dc3545');
+                $('#setupWebAuthn').show();
+            }
+        }
+
+        function logout(resetSecurity) {
+            const logoutType = resetSecurity ? 'безопасный' : 'обычный';
+            
+            if (resetSecurity) {
+                if (!confirm('Вы уверены? Безопасный выход удалит все настройки быстрого входа (PIN и WebAuthn).')) {
+                    return;
+                }
+            }
+            
+            showStatus(`🔄 Выполняется ${logoutType} выход...`, 'info');
+            
+            $.ajax({
+                url: 'auth_api.php?action=logout',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    reset_security: resetSecurity
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        showStatus(`✅ ${logoutType.charAt(0).toUpperCase() + logoutType.slice(1)} выход выполнен`, 'success');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 1000);
+                    } else {
+                        showStatus('❌ Ошибка выхода', 'error');
+                    }
+                },
+                error: function() {
+                    showStatus('❌ Ошибка выхода', 'error');
+                }
+            });
+        }
+
+        function setupWebAuthn() {
+            window.location.href = 'webauthn.html?mode=setup';
+        }
+
+        function resetPin() {
+            if (!confirm('Вы уверены, что хотите сбросить PIN код? Потребуется создать новый.')) {
+                return;
+            }
+            
+            $.ajax({
+                url: 'auth_api.php?action=reset-security',
+                method: 'POST',
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.success) {
+                        showStatus('✅ PIN код сброшен', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'setup.html';
+                        }, 1000);
+                    } else {
+                        showStatus('❌ Ошибка сброса PIN', 'error');
+                    }
+                },
+                error: function() {
+                    showStatus('❌ Ошибка сброса PIN', 'error');
+                }
+            });
+        }
+
+        function changePassword() {
+            showStatus('🔧 Смена пароля будет реализована в следующей версии', 'info');
+        }
+
+        function showStatus(message, type = 'info') {
+            $('#status')
+                .removeClass('hidden success error info')
+                .addClass(type)
+                .text(message)
+                .show();
+        }
+    </script>
+</body>
+</html>

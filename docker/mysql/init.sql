@@ -10,7 +10,7 @@ USE webauthn_db;
 -- ОСНОВНЫЕ ТАБЛИЦЫ WEBAUTHN
 -- ============================================================================
 
--- Таблица пользователей с расширенными полями для аналитики
+-- Таблица пользователей с расширенными полями для аналитики и традиционной авторизации
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id VARCHAR(255) UNIQUE NOT NULL,
@@ -18,10 +18,31 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     device_hash VARCHAR(64) COMMENT 'Хеш устройства пользователя',
     
+    -- Традиционная авторизация
+    username VARCHAR(50) UNIQUE NULL COMMENT 'Username for traditional login',
+    email VARCHAR(255) UNIQUE NULL COMMENT 'User email for recovery and login',
+    password_hash VARCHAR(255) NULL COMMENT 'Hashed password for traditional login',
+    
+    -- PIN система как в банковских приложениях
+    pin_hash VARCHAR(255) NULL COMMENT '6-digit PIN hash for quick access',
+    pin_enabled BOOLEAN DEFAULT FALSE COMMENT 'Is PIN login enabled',
+    pin_created_at TIMESTAMP NULL COMMENT 'When PIN was created',
+    pin_last_used TIMESTAMP NULL COMMENT 'Last successful PIN usage',
+    pin_attempts INT UNSIGNED DEFAULT 0 COMMENT 'Failed PIN attempts',
+    
+    -- Remember Me и быстрый вход
+    remember_token VARCHAR(64) NULL COMMENT 'Remember me token hash',
+    remember_expires TIMESTAMP NULL COMMENT 'Remember token expiration',
+    quick_login_enabled BOOLEAN DEFAULT FALSE COMMENT 'Enable quick login with PIN',
+    
+    -- WebAuthn integration
+    webauthn_enabled BOOLEAN DEFAULT FALSE COMMENT 'Is WebAuthn setup for this user',
+    webauthn_setup_at TIMESTAMP NULL COMMENT 'When WebAuthn was setup',
+    
     -- Аналитические поля
-    email VARCHAR(255) NULL COMMENT 'User email for recovery',
     display_name VARCHAR(255) NULL COMMENT 'User display name',
     last_login TIMESTAMP NULL COMMENT 'Last successful login',
+    last_login_method ENUM('PASSWORD', 'PIN', 'WEBAUTHN', 'REMEMBER_TOKEN') NULL COMMENT 'Last used login method',
     login_count INT UNSIGNED DEFAULT 0 COMMENT 'Total login count',
     failed_login_count INT UNSIGNED DEFAULT 0 COMMENT 'Failed login attempts',
     account_status ENUM('ACTIVE', 'SUSPENDED', 'LOCKED') DEFAULT 'ACTIVE',
@@ -30,10 +51,14 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     INDEX idx_user_id (user_id),
-    INDEX idx_device_hash (device_hash),
+    INDEX idx_username (username),
     INDEX idx_email (email),
+    INDEX idx_device_hash (device_hash),
+    INDEX idx_remember_token (remember_token),
     INDEX idx_status (account_status, created_at),
-    INDEX idx_risk (risk_score, last_login)
+    INDEX idx_risk (risk_score, last_login),
+    INDEX idx_pin_enabled (pin_enabled, quick_login_enabled),
+    INDEX idx_webauthn_enabled (webauthn_enabled)
 );
 
 -- Таблица учетных данных WebAuthn с расширенной аналитикой  

@@ -1,0 +1,631 @@
+/* НПФ Сургутнефтегаз - Корпоративная тема */
+
+:root {
+    /* Корпоративные цвета НПФ Сургутнефтегаз */
+    --npf-primary: #003366;        /* Темно-синий (основной) */
+    --npf-secondary: #0066CC;      /* Синий (вторичный) */
+    --npf-accent: #00AA44;         /* Зеленый (акцент) */
+    --npf-light-blue: #E6F3FF;    /* Светло-синий */
+    --npf-gold: #FFB000;          /* Золотой (для акцентов) */
+    --npf-gray: #F8F9FA;          /* Светло-серый */
+    --npf-dark-gray: #6C757D;     /* Темно-серый */
+    --npf-white: #FFFFFF;         /* Белый */
+    --npf-success: #00AA44;       /* Успех */
+    --npf-warning: #FFB000;       /* Предупреждение */
+    --npf-error: #DC3545;         /* Ошибка */
+}
+
+/* Общие стили */
+body {
+    background: linear-gradient(135deg, var(--npf-light-blue) 0%, var(--npf-white) 100%);
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+.container {
+    padding: 20px;
+}
+
+/* Главные контейнеры */
+.main-container,
+.login-container,
+.setup-container,
+.dashboard-container {
+    background: var(--npf-white);
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 51, 102, 0.1);
+    border: 1px solid var(--npf-light-blue);
+    position: relative;
+}
+
+.main-container::before,
+.login-container::before,
+.setup-container::before,
+.dashboard-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--npf-primary), var(--npf-secondary), var(--npf-accent));
+    border-radius: 16px 16px 0 0;
+}
+
+/* Заголовки */
+.app-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-top: 10px;
+}
+
+.app-logo {
+    font-size: 48px;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, var(--npf-primary), var(--npf-secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(2px 2px 4px rgba(0, 51, 102, 0.3));
+}
+
+.app-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--npf-primary);
+    text-shadow: 0 2px 4px rgba(0, 51, 102, 0.1);
+}
+
+.app-subtitle {
+    font-size: 16px;
+    color: var(--npf-dark-gray);
+    line-height: 1.4;
+}
+
+/* Табы авторизации */
+.auth-tabs {
+    background: var(--npf-light-blue);
+    border-radius: 12px;
+    padding: 6px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(0, 102, 204, 0.2);
+}
+
+.auth-tab {
+    flex: 1;
+    text-align: center;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--npf-dark-gray);
+    font-size: 14px;
+}
+
+.auth-tab.active {
+    background: var(--npf-white);
+    color: var(--npf-primary);
+    box-shadow: 0 4px 12px rgba(0, 51, 102, 0.15);
+    transform: translateY(-1px);
+}
+
+.auth-tab:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.7);
+    color: var(--npf-secondary);
+}
+
+/* Формы */
+.form-group label {
+    color: var(--npf-primary);
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group input {
+    border: 2px solid var(--npf-light-blue);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: var(--npf-white);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--npf-secondary);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    background: var(--npf-light-blue);
+}
+
+/* PIN поля - исправленная верстка */
+.pin-input-group {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+    max-width: 100%;
+}
+
+.pin-digit {
+    width: 40px !important;
+    height: 50px !important;
+    text-align: center;
+    font-size: 20px !important;
+    font-weight: bold;
+    border: 2px solid var(--npf-light-blue) !important;
+    border-radius: 8px !important;
+    background: var(--npf-white) !important;
+    color: var(--npf-primary) !important;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.pin-digit:focus {
+    border-color: var(--npf-secondary) !important;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1) !important;
+    outline: none !important;
+}
+
+.pin-digit.filled {
+    background: var(--npf-light-blue) !important;
+    border-color: var(--npf-accent) !important;
+    color: var(--npf-primary) !important;
+}
+
+/* Мобильная клавиатура - компактная */
+.mobile-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 25px auto;
+    max-width: 280px;
+    padding: 0 10px;
+}
+
+.keypad-btn {
+    aspect-ratio: 1;
+    border: 2px solid var(--npf-light-blue);
+    border-radius: 50%;
+    background: var(--npf-white);
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 55px;
+    color: var(--npf-primary);
+    box-shadow: 0 2px 8px rgba(0, 51, 102, 0.1);
+}
+
+.keypad-btn:hover {
+    background: var(--npf-light-blue);
+    border-color: var(--npf-secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
+}
+
+.keypad-btn:active {
+    transform: scale(0.95) translateY(-1px);
+    background: var(--npf-secondary);
+    color: var(--npf-white);
+}
+
+.keypad-btn.special {
+    background: var(--npf-gray);
+    color: var(--npf-dark-gray);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.keypad-btn.special:hover {
+    background: var(--npf-accent);
+    color: var(--npf-white);
+}
+
+/* Кнопки */
+.btn-primary {
+    background: linear-gradient(135deg, var(--npf-primary), var(--npf-secondary));
+    color: var(--npf-white);
+    border: none;
+    padding: 16px 28px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 51, 102, 0.3);
+    background: linear-gradient(135deg, var(--npf-secondary), var(--npf-accent));
+}
+
+.btn-primary:disabled {
+    background: var(--npf-dark-gray);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: var(--npf-gray);
+    color: var(--npf-primary);
+    border: 2px solid var(--npf-light-blue);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-secondary:hover {
+    background: var(--npf-light-blue);
+    border-color: var(--npf-secondary);
+    transform: translateY(-2px);
+}
+
+.quick-login-btn {
+    background: linear-gradient(135deg, var(--npf-accent), #00CC55);
+    color: var(--npf-white);
+    border: none;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(0, 170, 68, 0.2);
+}
+
+.quick-login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 170, 68, 0.3);
+}
+
+.webauthn-btn {
+    background: linear-gradient(135deg, var(--npf-gold), #FFD700);
+    color: var(--npf-primary);
+    border: none;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(255, 176, 0, 0.2);
+}
+
+.webauthn-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 176, 0, 0.3);
+}
+
+/* Статусы */
+.status {
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid transparent;
+    font-size: 14px;
+}
+
+.status.success {
+    background: linear-gradient(135deg, #E8F5E8, #F0FFF0);
+    color: var(--npf-accent);
+    border-color: var(--npf-accent);
+}
+
+.status.error {
+    background: linear-gradient(135deg, #FFF0F0, #FFE8E8);
+    color: var(--npf-error);
+    border-color: var(--npf-error);
+}
+
+.status.info {
+    background: linear-gradient(135deg, var(--npf-light-blue), #F0F8FF);
+    color: var(--npf-primary);
+    border-color: var(--npf-secondary);
+}
+
+/* Устройство статус */
+.device-status {
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+    border: 2px solid;
+}
+
+.device-status.mobile {
+    background: linear-gradient(135deg, #E8F5E8, #F0FFF0);
+    border-color: var(--npf-accent);
+    color: var(--npf-accent);
+}
+
+.device-status.desktop {
+    background: linear-gradient(135deg, #FFF8E1, #FFFBF0);
+    border-color: var(--npf-gold);
+    color: #B8860B;
+}
+
+/* Демо информация */
+.demo-info {
+    background: linear-gradient(135deg, #FFF8E1, #FFFEF7);
+    border: 2px solid var(--npf-gold);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.demo-info h4 {
+    margin: 0 0 10px 0;
+    color: var(--npf-primary);
+    font-weight: 700;
+}
+
+.demo-info p {
+    margin: 6px 0;
+    color: var(--npf-primary);
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+}
+
+/* Quick access секция */
+.quick-access {
+    background: linear-gradient(135deg, var(--npf-light-blue), #F8FCFF);
+    border: 2px solid var(--npf-secondary);
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 20px;
+}
+
+.quick-access-title {
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--npf-primary);
+    text-align: center;
+    font-size: 18px;
+}
+
+/* Remember me */
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
+    padding: 12px;
+    background: var(--npf-light-blue);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 102, 204, 0.2);
+}
+
+.remember-me input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--npf-accent);
+}
+
+.remember-me label {
+    color: var(--npf-primary);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Шаги настройки */
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+    gap: 15px;
+}
+
+.step-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--npf-gray);
+    transition: all 0.3s ease;
+    border: 2px solid var(--npf-light-blue);
+}
+
+.step-dot.active {
+    background: var(--npf-secondary);
+    border-color: var(--npf-secondary);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
+}
+
+.step-dot.completed {
+    background: var(--npf-accent);
+    border-color: var(--npf-accent);
+}
+
+.step-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--npf-primary);
+    text-align: center;
+}
+
+.step-description {
+    font-size: 16px;
+    color: var(--npf-dark-gray);
+    margin-bottom: 30px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* Информационные блоки */
+.pin-strength,
+.security-info {
+    background: linear-gradient(135deg, #F0F8FF, var(--npf-light-blue));
+    border: 2px solid var(--npf-secondary);
+    border-radius: 8px;
+    padding: 18px;
+    margin: 20px 0;
+}
+
+.pin-strength strong,
+.security-info h4 {
+    color: var(--npf-primary);
+    font-weight: 700;
+}
+
+/* Dashboard карточки */
+.user-info,
+.security-actions {
+    background: var(--npf-white);
+    border-radius: 16px;
+    padding: 30px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 24px rgba(0, 51, 102, 0.1);
+    border: 1px solid var(--npf-light-blue);
+}
+
+.security-card {
+    background: var(--npf-white);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 51, 102, 0.1);
+    border-left: 4px solid var(--npf-gray);
+    transition: all 0.3s ease;
+}
+
+.security-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 51, 102, 0.15);
+}
+
+.security-card.enabled {
+    border-left-color: var(--npf-accent);
+    background: linear-gradient(135deg, #F8FFF8, var(--npf-white));
+}
+
+.security-card.disabled {
+    border-left-color: var(--npf-error);
+    background: linear-gradient(135deg, #FFF8F8, var(--npf-white));
+}
+
+.security-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: var(--npf-primary);
+    font-weight: 700;
+}
+
+.security-card p {
+    margin: 0 0 12px 0;
+    color: var(--npf-dark-gray);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* Logout секция */
+.logout-section {
+    background: linear-gradient(135deg, #FFF8F8, #FFFAFA);
+    border: 2px solid rgba(220, 53, 69, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 25px;
+}
+
+.logout-section h3 {
+    color: var(--npf-primary);
+    margin-bottom: 10px;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 480px) {
+    .main-container,
+    .login-container,
+    .setup-container {
+        margin: 20px auto;
+        padding: 20px;
+        max-width: calc(100vw - 40px);
+    }
+    
+    .pin-input-group {
+        gap: 6px;
+        flex-wrap: nowrap;
+    }
+    
+    .pin-digit {
+        width: 35px !important;
+        height: 45px !important;
+        font-size: 18px !important;
+    }
+    
+    .mobile-keypad {
+        gap: 10px;
+        max-width: 260px;
+    }
+    
+    .keypad-btn {
+        min-height: 50px;
+        font-size: 18px;
+    }
+    
+    .app-logo {
+        font-size: 40px;
+    }
+    
+    .app-title {
+        font-size: 24px;
+    }
+    
+    .security-status {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Дополнительные элементы */
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--npf-secondary);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 8px;
+}
+
+.btn-link:hover {
+    color: var(--npf-primary);
+}
+
+/* Скрытые элементы */
+.hidden {
+    display: none !important;
+}
+
+/* Анимации загрузки */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
